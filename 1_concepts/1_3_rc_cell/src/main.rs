@@ -39,10 +39,9 @@ impl<T: Clone> GlobalStack<T> {
     }
 }
 
-impl<T: Clone> Clone for GlobalStack<T> {
+impl<T> Clone for GlobalStack<T> {
     fn clone(&self) -> Self {
-        let new_stack = self.stack.clone();
-        GlobalStack { stack: new_stack }
+        Self { stack: Rc::clone(&self.stack) }
     }
 }
 

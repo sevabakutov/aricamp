@@ -38,7 +38,11 @@ impl Polyline {
 
     fn remove(&mut self, index: usize) -> Point {
         if self.array.len() > index {
-            return self.array.remove(index)
+            let a =  self.array.remove(index);
+                if self.is_empty() {
+                    self.push(Point::default());
+                }
+            return a
         }
         return Point::default()
     }
