@@ -10,15 +10,23 @@ struct Polyline {
 }
 
 impl Polyline {
+    fn is_empty(&self) -> bool {
+        if self.array.len() == 0 {
+            return true
+        }
+        return false
+    }
+
     fn push(&mut self, item: Point) {
         self.array.push(item);
     }
 
     fn pop(&mut self) -> Option<Point> {
-        if self.array.len() > 1 {
-            return Some(self.array.pop().unwrap())
+        let point = self.array.pop().unwrap();
+        if self.is_empty() {
+            self.push(Point::default());
         }
-        None
+        Some(point)
     }
 
     fn get(&self, index: usize) -> Option<&Point> {
@@ -35,19 +43,8 @@ impl Polyline {
         return Point::default()
     }
 
-    fn new(array: Option<Vec<Point>>) -> Self {
-        Polyline {
-            array: match array {
-                Some(arr) => {
-                    if arr.len() >= 1{
-                        arr
-                    } else {
-                        vec![Point::default()]
-                    }
-                },
-                None => vec![Point::default()]
-            }
-        }
+    fn new() -> Self {
+        Polyline { array: vec![Point::default()] }
     }
 
 }
@@ -73,28 +70,34 @@ mod tests {
     }
 
     #[test]
+    fn test_polyline_new() {
+        let polyline = Polyline::new();
+        assert!(!polyline.is_empty());
+    }
+
+    #[test]
     fn test_polyline_push_and_get() {
-        let mut polyline = Polyline::new(None);
+        let mut polyline = Polyline::new();
         let point = Point { x: 5, y: -3 };
         polyline.push(point);
 
-        assert_eq!(polyline.get(0), Some(&Point::default()));
+        assert_eq!(polyline.get(0), Some(&Default::default()));
         assert_eq!(polyline.get(1), Some(&point));
         assert_eq!(polyline.get(2), None);
     }
 
     #[test]
     fn test_polyline_pop() {
-        let mut polyline = Polyline::new(None);
+        let mut polyline = Polyline::new();
 
-        assert_eq!(polyline.pop(), None);
-        assert_eq!(polyline.pop(), None);
-        assert_eq!(polyline.pop(), None);
+        assert_eq!(polyline.pop(), Some(Default::default()));
+        assert_eq!(polyline.pop(), Some(Default::default()));
+        assert_eq!(polyline.pop(), Some(Default::default()));
     }
 
     #[test]
     fn test_polyline_clone() {
-        let mut polyline = Polyline::new(None);
+        let mut polyline = Polyline::new();
         polyline.push(Point { x: 1, y: 1 });
         let polyline_clone = polyline.clone();
 
