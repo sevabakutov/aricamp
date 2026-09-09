@@ -81,10 +81,10 @@ __Estimated time__: 1 day
 ## Questions
 
 After completing everything above, you should be able to answer (and understand why) the following questions:
-1. What purpose does 📚 [`Default`]⏱0.25h trait serve in 🏠 [Rust]?
-2. What is `#[derive(Default)]` from `std` capable of? What does it wrong? Which are alternatives?
-3. What does 📚 [`Clone`]⏱0.75h mean semantically?
-4. What does 📚 [`Copy`]⏱0.25h mean semantically? How is it connected with 📚 [`Clone`]⏱0.75h? Which limitations does it have and why?
+1. What purpose does 📚 [`Default`]⏱0.25h trait serve in 🏠 [Rust]? (it allows creating struct with default values of its fields)
+2. What is `#[derive(Default)]` from `std` capable of? What does it wrong? Which are alternatives? (it's capable of implementing default fields values for structure where every field implements default trait, idk, implement default trait with default method on your own)
+3. What does 📚 [`Clone`]⏱0.75h mean semantically? (clone always makes new data, it can be cheap or expensive cheap if we clone smart pointers... and expensive if we clone data on heap like string, vec..., if we clone something on heap but not smart pointer we get new identical data on heap with new pointer to it)
+4. What does 📚 [`Copy`]⏱0.25h mean semantically? How is it connected with 📚 [`Clone`]⏱0.75h? Which limitations does it have and why? (copy copies data bit to bit, it can be implicated only if struct implements clone, can only copy types which are located in stack because of rust ownership rules)
 
 
 
