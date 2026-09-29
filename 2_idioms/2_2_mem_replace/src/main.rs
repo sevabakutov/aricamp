@@ -1,3 +1,5 @@
+use std::mem;
+
 fn main() {
     let mut s = Solver {
         expected: Trinity { a: 1, b: 2, c: 3 },
@@ -21,12 +23,8 @@ struct Trinity<T> {
 
 impl<T: Clone> Trinity<T> {
     fn rotate(&mut self) {
-        let a = self.a.clone();
-        let b = self.b.clone();
-        let c = self.c.clone();
-        self.a = b;
-        self.b = c;
-        self.c = a;
+        mem::swap(&mut self.a, &mut self.b);
+        mem::swap(&mut self.b, &mut self.c);
     }
 }
 
