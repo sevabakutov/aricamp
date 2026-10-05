@@ -3,8 +3,8 @@ use std::net::{IpAddr, SocketAddr};
 fn main() {
     println!("Refactor me!");
 
-    let mut err = Error::new("NO_USER".to_string());
-    err.status(404).message("User not found".to_string());
+    let mut err = Error::new("NO_USER");
+    err.status(404).message("User not found");
 }
 
 #[derive(Debug)]
@@ -26,9 +26,9 @@ impl Default for Error {
 }
 
 impl Error {
-    pub fn new(code: String) -> Self {
+    pub fn new<S: Into<String>>(code: S) -> Self {
         let mut err = Self::default();
-        err.code = code;
+        err.code = code.into();
         err
     }
 
@@ -37,8 +37,8 @@ impl Error {
         self
     }
 
-    pub fn message(&mut self, m: String) -> &mut Self {
-        self.message = m;
+    pub fn message<S: Into<String>>(&mut self, m: S) -> &mut Self {
+        self.message = m.into();
         self
     }
 }
