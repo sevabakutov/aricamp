@@ -1,10 +1,4 @@
-#[derive(Clone, Debug, PartialEq)]
-pub enum State {
-    New,
-    Unmoderated,
-    Published,
-    Deleted,
-}
+use std::marker::PhantomData;
 
 pub mod post {
     #[derive(Clone, Debug, PartialEq)]
@@ -23,63 +17,71 @@ pub mod user {
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub struct Post {
+pub struct Post<State> {
     pub id: post::Id,
     pub user_id: user::Id,
     pub title: post::Title,
     pub body: post::Body,
-    pub state: State,
+    state: PhantomData<State>,
 }
 
-impl Post {
-    pub fn new(author_id: user::Id, id: post::Id, title: post::Title, body: post::Body) -> Post {
+#[derive(Clone, Debug, PartialEq)]
+pub struct New;
+#[derive(Clone, Debug, PartialEq)]
+pub struct Unmoderated;
+#[derive(Clone, Debug, PartialEq)]
+pub struct Published;
+#[derive(Clone, Debug, PartialEq)]
+pub struct Deleted;
+
+impl Post<New> {
+    pub fn publish(self)-> Post<Unmoderated> {
         Post {
-            id,
-            user_id: author_id,
-            title,
-            body,
-            state: State::New,
-        }
-    }
-
-    pub fn publish(&mut self) {
-        if self.state == State::New {
-            println!("waiting for approval {:?}", self.body);
-            self.state = State::Unmoderated;
-        } else {
-            println!("wrong action");
-        }
-    }
-
-    pub fn allow(&mut self) {
-        if self.state == State::Unmoderated {
-            println!("post: {:?} is published", self.title);
-            self.state = State::Published;
-        } else {
-            println!("wrong action");
-        }
-    }
-
-    pub fn delete(&mut self) {
-        if self.state == State::Published {
-            println!("post: {:?} has been deleted", self.title);
-            self.state = State::Deleted;
-        } else {
-            println!("wrong action");
-        }
-    }
-
-    pub fn deny(&mut self) {
-        if self.state == State::Unmoderated {
-            println!("{:?} was denied", self.body);
-            self.state = State::Deleted;
-        } else {
-            println!("wrong action");
+            id: self.id,
+            user_id: self.user_id,
+            title: self.title,
+            body: self.body,
+            state: PhantomData,
         }
     }
 }
+impl Post<Unmoderated> {
+    pub fn allow(self) -> Post<Published> {
+        Post {
+            id: self.id,
+            user_id: self.user_id,
+            title: self.title,
+            body: self.body,
+            state: PhantomData,
+        }
+    }
 
-pub fn repost(post: &Post, new_author_id: user::Id) -> Post {
+
+    pub fn deny(self) -> Post<Deleted> {
+         Post {
+            id: self.id,
+            user_id: self.user_id,
+            title: self.title,
+            body: self.body,
+            state: PhantomData,
+        }
+
+    }
+}
+impl Post<Published> {
+    pub fn delete(self) -> Post<Deleted> {
+        Post {
+            id: self.id,
+            user_id: self.user_id,
+            title: self.title,
+            body: self.body,
+            state: PhantomData,
+        }
+
+    }
+}
+
+pub fn repost(post: &Post<Published>, new_author_id: user::Id) -> Post<Published> {
     let mut new_post = post.clone();
     new_post.user_id = new_author_id;
     new_post
@@ -93,103 +95,62 @@ fn main() {
 mod tests {
     use super::*;
 
-    fn create_test_post() -> Post {
-        Post::new(
-            user::Id(1),
-            post::Id(100),
-            post::Title("Test Title".to_string()),
-            post::Body("Test Body".to_string()),
-        )
+    #[test]
+    fn test_successful_post_lifecycle_and_repost() {
+        let new_post = Post {
+            id: post::Id(1),
+            user_id: user::Id(100),
+            title: post::Title("Заголовок".to_string()),
+            body: post::Body("Текст статьи".to_string()),
+            state: PhantomData,
+        };
+
+        let unmoderated_post = new_post.publish();
+        assert_eq!(unmoderated_post.user_id, user::Id(100));
+
+        let published_post = unmoderated_post.allow();
+        assert_eq!(published_post.id, post::Id(1));
+
+        let new_author = user::Id(200);
+        let reposted_post = repost(&published_post, new_author.clone());
+
+        assert_eq!(reposted_post.user_id, new_author);
+        assert_eq!(reposted_post.title, published_post.title);
+        assert_eq!(reposted_post.body, published_post.body);
+
+        let deleted_post = published_post.delete();
+        assert_eq!(deleted_post.id, post::Id(1));
     }
 
     #[test]
-    fn test_new_post_initial_state() {
-        let post = create_test_post();
-        assert_eq!(post.state, State::New);
-        assert_eq!(post.user_id, user::Id(1));
-        assert_eq!(post.id, post::Id(100));
+    fn test_deny_unmoderated_post() {
+        let new_post = Post {
+            id: post::Id(2),
+            user_id: user::Id(101),
+            title: post::Title("Bad Post".to_string()),
+            body: post::Body("Spam".to_string()),
+            state: PhantomData,
+        };
+
+        let unmoderated_post = new_post.publish();
+        let deleted_post = unmoderated_post.deny();
+
+        assert_eq!(deleted_post.id, post::Id(2));
     }
 
-    #[test]
-    fn test_publish_from_new_state() {
-        let mut post = create_test_post();
-        post.publish();
-        assert_eq!(post.state, State::Unmoderated);
-    }
 
     #[test]
-    fn test_publish_invalid_transition() {
-        let mut post = create_test_post();
-        post.publish();
-        post.publish();
+    fn test_invalid_transition_fails_to_compile() {
+        let new_post = Post {
+            id: post::Id(3),
+            user_id: user::Id(102),
+            title: post::Title("Title".to_string()),
+            body: post::Body("Body".to_string()),
+            state: PhantomData,
+        };
 
-        assert_eq!(post.state, State::Unmoderated);
-    }
-
-    #[test]
-    fn test_allow_from_unmoderated_state() {
-        let mut post = create_test_post();
-        post.publish();
-        post.allow();
-
-        assert_eq!(post.state, State::Published);
-    }
-
-    #[test]
-    fn test_allow_invalid_transition_from_new() {
-        let mut post = create_test_post();
-        post.allow();
-        assert_eq!(post.state, State::New);
-    }
-
-    #[test]
-    fn test_deny_from_unmoderated_state() {
-        let mut post = create_test_post();
-        post.publish();
-        post.deny();
-
-        assert_eq!(post.state, State::Deleted);
-    }
-
-    #[test]
-    fn test_deny_invalid_transition_from_published() {
-        let mut post = create_test_post();
-        post.publish();
-        post.allow();
-        post.deny();
-        assert_eq!(post.state, State::Published);
-    }
-
-    #[test]
-    fn test_delete_from_published_state() {
-        let mut post = create_test_post();
-        post.publish();
-        post.allow();
-        post.delete();
-
-        assert_eq!(post.state, State::Deleted);
-    }
-
-    #[test]
-    fn test_delete_invalid_transition_from_new() {
-        let mut post = create_test_post();
-        post.delete();
-        assert_eq!(post.state, State::New);
-    }
-
-    #[test]
-    fn test_repost() {
-        let original_post = create_test_post();
-        let new_author = user::Id(2);
-
-        let new_post = repost(&original_post, new_author.clone());
-
-        assert_eq!(new_post.user_id, new_author);
-        assert_eq!(new_post.id, original_post.id);
-        assert_eq!(new_post.title, original_post.title);
-        assert_eq!(new_post.body, original_post.body);
-        assert_eq!(new_post.state, original_post.state);
-
-        assert_eq!(original_post.user_id, user::Id(1));
+        let published_post = new_post.allow();
+        //Error:...
+        let deleted_post = new_post.delete();
     }
 }
