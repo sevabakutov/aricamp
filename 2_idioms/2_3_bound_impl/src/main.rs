@@ -24,9 +24,7 @@ pub trait Aggregate: Default {
 }
 
 /// An identifier for an aggregate.
-pub trait AggregateId<A>
-where
-    A: Aggregate,
+pub trait AggregateId<A: Aggregate>
 {
     /// Gets the stringified aggregate identifier.
     fn as_str(&self) -> &str;
@@ -100,19 +98,13 @@ impl Version {
 
 /// An aggregate that has been loaded from a source, which keeps track of the version of its last snapshot and the current version of the aggregate.
 #[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq)]
-pub struct HydratedAggregate<A>
-where
-    A: Aggregate,
-{
+pub struct HydratedAggregate<A> {
     version: Version,
     snapshot_version: Option<Version>,
     state: A,
 }
 
-impl<A> HydratedAggregate<A>
-where
-    A: Aggregate,
-{
+impl<A> HydratedAggregate<A> {
     /// The current version of the aggregate.
     pub fn version(&self) -> Version {
         self.version
@@ -128,6 +120,10 @@ where
         self.snapshot_version = Some(new_snapshot_version);
     }
 
+
+}
+
+impl<A: Aggregate> HydratedAggregate<A>{
     /// The actual aggregate.
     pub fn state(&self) -> &A {
         &self.state
@@ -147,19 +143,13 @@ where
     }
 }
 
-impl<A> AsRef<A> for HydratedAggregate<A>
-where
-    A: Aggregate,
-{
+impl<A> AsRef<A> for HydratedAggregate<A> {
     fn as_ref(&self) -> &A {
         &self.state
     }
 }
 
-impl<A> Borrow<A> for HydratedAggregate<A>
-where
-    A: Aggregate,
-{
+impl<A> Borrow<A> for HydratedAggregate<A> {
     fn borrow(&self) -> &A {
         &self.state
     }
