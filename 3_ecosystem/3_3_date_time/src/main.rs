@@ -1,24 +1,40 @@
-fn main() {
-    println!("Implement me!");
-}
+use time::format_description::well_known::Iso8601;
+use time::{Date, Month};
+
+fn main() {}
 
 const NOW: &str = "2019-06-26";
 
-struct User;
+struct User(time::Date);
 
 impl User {
     fn with_birthdate(year: i32, month: u32, day: u32) -> Self {
-        unimplemented!()
+        let month = Month::try_from(month as u8).unwrap();
+        let day: u8 = day.try_into().unwrap();
+        Self(time::Date::from_calendar_date(year, month, day).unwrap())
     }
 
     /// Returns current age of [`User`] in years.
     fn age(&self) -> u16 {
-        unimplemented!()
+        let now = Date::parse(NOW, &Iso8601::DEFAULT).unwrap();
+        let birthdate = self.0;
+
+        if birthdate > now {
+            return 0;
+        }
+
+        let mut years = now.year() - birthdate.year();
+
+        if (now.month(), now.day()) < (birthdate.month(), birthdate.day()) {
+            years -= 1;
+        }
+
+        years.try_into().unwrap_or(0)
     }
 
     /// Checks if [`User`] is 18 years old at the moment.
     fn is_adult(&self) -> bool {
-        unimplemented!()
+        self.age() >= 18
     }
 }
 
