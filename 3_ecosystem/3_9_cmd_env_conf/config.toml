@@ -18,7 +18,7 @@
 # This one must be reachable externally.
 #
 # Default:
-#   http_port = 8081
+   http_port = 8088
 
 # Port that exposes gRPC interface for clients.
 # This one must be reachable externally.
