@@ -1,14 +1,14 @@
 use clap::{Parser, command};
 use config::{Config, Environment, File};
-use crate::LogAppLevels::warn;
 use {serde::Deserialize};
 
 #[derive(Parser, Debug)]
+#[command(version = "1.0.0")]
 struct Cli {
-    #[arg(short, long)]
+    #[arg(short, long, help = "Enables debug mode")]
     debug: bool,
 
-    #[arg(short, long, default_value = "config.toml", env = "CONF_FILE")]
+    #[arg(short, long, default_value = "config.toml", env = "CONF_FILE", help = "Path to configuration file")]
     conf: String,
 }
 
@@ -115,7 +115,7 @@ fn main() -> Result<(), config::ConfigError> {
         .set_default("background.watchdog.limit", 10)?
         .set_default("background.watchdog.lock_timeout", "4s")?
 
-        .add_source(File::with_name("config").required(false))
+        .add_source(File::with_name(&cli.conf).required(false))
 
         .add_source(
             Environment::with_prefix("CONF")
